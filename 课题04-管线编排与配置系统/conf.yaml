@@ -1,0 +1,19 @@
+# Echo 管线配置文件
+# 修改这里的参数，不需要改 pipeline.py，就能调整管线行为
+
+pipeline:
+  queue_size: 10        # 每个队列的最大容量（背压控制）
+
+  input:
+    items: 5            # 产生多少条模拟音频
+    delay: 0.1          # 每条音频的采集间隔（秒）
+
+  asr:
+    delay: 0.2          # ASR 处理每条音频的耗时（秒）
+
+  llm:
+    delay: 0.3          # LLM 生成每条回复的耗时（秒）
+    prefix: "Echo"      # 回复的前缀
+
+  output:
+    delay: 0.1          # 输出每条结果的间隔（秒）
