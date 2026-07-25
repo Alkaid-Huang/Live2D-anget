@@ -43,7 +43,8 @@ def record_audio(duration: int, sample_rate: int, channels: int) -> np.ndarray:
     #   dtype —— 数据类型，用 'float32'
     # 返回值: numpy 数组，形状 (frames, channels)
     # 提示: frames = int(duration * sample_rate)
-    pass
+    frames = int(duration * sample_rate)
+    recording = sd.rec(frames,sample_rate,channels,dtype='float32')
 
     # ═══════════════════════════════════════════════════════════
     # TODO 2: 等待录音完成
@@ -51,7 +52,7 @@ def record_audio(duration: int, sample_rate: int, channels: int) -> np.ndarray:
     # 方法: sd.wait()
     # 作用: 阻塞当前线程，直到录音完成。不加这行，recording 可能是空的
     # 提示: 一行代码
-    pass
+    sd.wait()
 
     print("录音完成！")
     return recording
@@ -72,7 +73,7 @@ def save_wav(data: np.ndarray, file_path: str, sample_rate: int):
     #   samplerate —— 采样率
     #   subtype —— 位深格式，用 'PCM_16'（16位 PCM）
     # 提示: 一行代码
-    pass
+    sf.write(file_path,data,sample_rate,subtype='PCM_16')
 
     print("保存完成！")
 
@@ -91,7 +92,7 @@ def extract_mfcc(file_path: str, n_mfcc: int = 13) -> np.ndarray:
     #   sr —— 目标采样率（会自动重采样），用 SAMPLE_RATE
     # 返回值: (y, sr) —— y 是 1D 数组，sr 是采样率
     # 提示: y, sr = librosa.load(file_path, sr=SAMPLE_RATE)
-    pass
+    y,sample_rate = librosa.load(file_path, sr=SAMPLE_RATE)
 
     # ═══════════════════════════════════════════════════════════
     # TODO 5: 用 librosa.feature.mfcc 提取 MFCC 特征
@@ -104,8 +105,7 @@ def extract_mfcc(file_path: str, n_mfcc: int = 13) -> np.ndarray:
     #   n_mfcc —— MFCC 系数个数，用参数 n_mfcc
     # 返回值: 2D 数组，形状 (n_mfcc, 帧数)
     # 提示: mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc)
-    pass
-
+    mfcc = librosa.feature.mfcc(y=y, sr=sample_rate, n_mfcc=n_mfcc)
     return mfcc
 
 
