@@ -60,8 +60,8 @@ def load_model():
     # 参数: 无
     # 返回值: 模型对象，后续传给 get_speech_timestamps 使用
     # 提示: 一行代码，赋值给 model
-    pass
-
+    model = load_silero_vad()
+    
     print("模型加载完成！")
     return model
 
@@ -78,7 +78,7 @@ def detect_speech(wav_path: str, model) -> tuple:
     # 参数: path —— 音频文件路径，用参数 wav_path
     # 返回值: torch.Tensor，1D，值域 -1.0 到 1.0
     # 提示: wav = read_audio_sf(wav_path)
-    pass
+    wav = read_audio_sf(wav_path)
 
     print(f"音频长度: {len(wav)} 个采样点（{len(wav) / SAMPLE_RATE:.1f} 秒）")
 
@@ -95,7 +95,7 @@ def detect_speech(wav_path: str, model) -> tuple:
     #   return_seconds —— 设为 False（返回采样点，方便后续切片）
     # 返回值: list[dict]，每个 dict 含 'start' 和 'end' 键（采样点索引）
     # 提示: 注意 return_seconds=False，这样 start/end 是采样点索引，可以直接用于切片
-    pass
+    speech_ts = get_speech_timestamps(wav,model, threshold=THRESHOLD, min_silence_duration_ms=MIN_SILENCE_MS, return_seconds=False)
 
     print(f"检测到 {len(speech_ts)} 个语音段")
     for i, ts in enumerate(speech_ts):
@@ -122,7 +122,7 @@ def split_and_save(speech_ts: list, wav, output_dir: str = OUTPUT_DIR):
         #   end —— ts['end']（这一段的结束采样点）
         # 返回值: torch.Tensor 子集
         # 提示: chunk = wav[ts['start']:ts['end']]
-        pass
+        chunk = wav[ts['start']:ts['end']]
 
         # ═══════════════════════════════════════════════════════════
         # TODO 5: 转换为 numpy 数组并保存为 WAV
@@ -134,7 +134,9 @@ def split_and_save(speech_ts: list, wav, output_dir: str = OUTPUT_DIR):
         # 步骤3: sf.write(file_path, chunk_np, SAMPLE_RATE)
         #        作用: 保存为 WAV 文件
         # 提示: 三行代码
-        pass
+        chunk_np = chunk.numpy()
+        file_path = os.path.join(output_dir, f"chunk_{i:03d}.wav")
+        sf.write(file_path, chunk_np, SAMPLE_RATE)
 
         duration = len(chunk) / SAMPLE_RATE
         print(f"  chunk_{i:03d}.wav（{duration:.2f}s）")
