@@ -60,7 +60,8 @@ class StateMachine:
         #   1. rms = np.sqrt(np.mean(audio_np ** 2))  —— 均方根
         #   2. return 20 * np.log10(rms + 1e-7)       —— 转分贝，+1e-7 防 log(0)
         # 提示: 两行代码
-        pass
+        rms = np.sqrt(np.mean(audio_np ** 2))
+        return 20 * np.log10(rms + 1e-7)
 
     def _is_hit(self, prob: float, db: float) -> bool:
         """判断是否命中（双阈值，用平滑后的值）"""
@@ -99,7 +100,20 @@ class StateMachine:
             #         - hit_count = 0
             # 3. 若未命中: hit_count = 0（连续命中被打断）
             # 4. IDLE 态不输出，return None
-            pass
+            self.pre_buffer.append(chunk_bytes)
+
+            if is_hit:
+                self.hit_count += 1
+                self.miss_count = 0
+                if self.hit_count > self.required_hits:
+                    self.state = State.ACTIVE
+                    self.bytes_buffer = b"".join(self.pre_buffer) + self.bytes_buffer
+                    self.pre_buffer.clear()
+                    self.hit_count = 0
+            elif not is_hit:
+                self.hit_count = 0
+            return None
+
 
         # ═══════════════════════════════════════════════════════════
         # TODO 3: ACTIVE 态处理（正在说话）
@@ -112,7 +126,17 @@ class StateMachine:
             #         - 状态转 INACTIVE
             #         - miss_count = 0
             # 4. ACTIVE 态不立即输出（要等 INACTIVE→IDLE 才输出完整段），return None
-            pass
+            self.bytes_buffer += chunk_bytes
+            if is_hit:
+                self.miss_count = 0
+            elif not is_hit:
+                self.miss_count += 1
+                if self.miss_count >= self.required_misses:
+                    self.state = State.INACTIVE
+                    self.miss_count = 0
+            return None
+
+        
 
         # ═══════════════════════════════════════════════════════════
         # TODO 4: INACTIVE 态处理（暂停，可能说完）
@@ -131,6 +155,18 @@ class StateMachine:
             #         - miss_count = 0
             #         - return result  ← 吐出完整语音段！
             # 3. INACTIVE 态若未达输出条件，return None
-            pass
-
+            if is_hit:
+                self.hit_count += 1
+                self.miss_count = 0
+                self.state = State.ACTIVE
+                return None
+            elif not is_hit:
+                self.miss_count += 1
+                if self.miss_count > self.required_misses:
+                    result = self.bytes_buffer
+                    self.state = State.IDLE
+                    self.bytes_buffer = b""
+                    self.miss_count = 0
+                    return result
+                
         return None

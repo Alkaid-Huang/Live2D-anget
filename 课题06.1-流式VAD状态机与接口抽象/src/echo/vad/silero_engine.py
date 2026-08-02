@@ -64,7 +64,7 @@ class SileroVADEngine(VADInterface):
         #   3. 若 result 不是 None（状态机吐出完整语音段）:
         #      yield result
         # 提示: 5-6 行代码
-        pass
+        
 
     async def async_detect_speech(self, audio_chunks):
         """
