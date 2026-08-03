@@ -64,7 +64,12 @@ class SileroVADEngine(VADInterface):
         #   3. 若 result 不是 None（状态机吐出完整语音段）:
         #      yield result
         # 提示: 5-6 行代码
-        
+        for audio_chunk in audio_chunks:
+            prob = self.model(audio_chunk[0], self.window_size_samples).item()
+            result = self.state_machine.process(prob=prob, audio_np=audio_chunk[0], chunk_bytes=audio_chunk[1])
+            if result is not None:
+                yield result
+
 
     async def async_detect_speech(self, audio_chunks):
         """
@@ -87,4 +92,10 @@ class SileroVADEngine(VADInterface):
         #            break
         #        yield chunk
         # 提示: 注意 StopIteration 要捕获（生成器结束）
-        pass
+        sync_gen = self.detect_speech(audio_chunks)
+        while True:
+            try:
+                chunk = await asyncio.to_thread(next,sync_gen)
+            except StopIteration:
+                break
+            yield chunk
