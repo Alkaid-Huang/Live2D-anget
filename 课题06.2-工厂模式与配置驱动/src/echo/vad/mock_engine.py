@@ -14,3 +14,4 @@ from .vad_factory import register_vad
 #   3. detect_speech 是生成器：遍历 audio_chunks，每次 yield chunk[1]（chunk_bytes）
 #      （因为 MockVAD 不做真正检测，直接把字节吐出）
 # 提示: 6-8 行代码
+

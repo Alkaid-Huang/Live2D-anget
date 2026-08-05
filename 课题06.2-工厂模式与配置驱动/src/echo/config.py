@@ -22,7 +22,13 @@ class SileroVADConfig(BaseModel):
     #   - pre_buffer_size: int, 默认 20, 必须 > 0
     #   - window_size_samples: int, 默认 512, 必须 > 0
     # 提示: 每行用 Field(default=..., ge=... 或 gt=...)
-    pass
+    prob_threshold: float = Field(default = 0.5,ge = 0.0,le = 1.0)
+    db_threshold: float = Field(default= -20.0,le = 0)
+    required_hits: int = Field(default=3, gt=0)
+    required_misses: int = Field(default=24, gt=0)
+    smoothing_window: int = Field(default=5, gt=0)
+    pre_buffer_size: int = Field(default=20, gt=0)
+    window_size_samples: int = Field(default=512, gt=0)
 
 
 class VADConfig(BaseModel):
@@ -45,4 +51,4 @@ class EchoConfig(BaseModel):
     # 要求：
     #   - vad_config: VADConfig 类型，默认 VADConfig()
     # 提示: 一行代码
-    pass
+    vad_config: VADConfig = Field(default=VADConfig)
