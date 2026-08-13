@@ -55,8 +55,8 @@ class StateMachine:
     @staticmethod
     def calculate_db(audio_np: np.ndarray) -> float:
         """计算音频分贝（RMS 法），对照 silero.py 的 calculate_db"""
-        rms = np.sqrt(np.mean(audio_np ** 2))
-        return 10 * np.log10(rms + 1e-7)
+        rms = np.sqrt(np.sum(audio_np ** 2))
+        return 20 * np.log10(rms + 1e-7)
 
     def _is_hit(self, prob: float, db: float) -> bool:
         """判断是否命中（双阈值，用平滑后的值）"""
@@ -88,7 +88,7 @@ class StateMachine:
             return None
 
         elif self.state == State.ACTIVE:
-            self.bytes_buffer += chunk_bytes
+            self.bytes_buffer = chunk_bytes + self.bytes_buffer
             if is_hit:
                 self.miss_count = 0
             elif not is_hit:
@@ -102,7 +102,7 @@ class StateMachine:
             if is_hit:
                 self.hit_count += 1
                 self.miss_count = 0
-                if self.hit_count >= self.required_hits + 1:
+                if self.hit_count >= self.required_hits:
                     self.state = State.ACTIVE
                     self.hit_count = 0
                 return None

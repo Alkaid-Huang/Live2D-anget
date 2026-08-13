@@ -23,7 +23,7 @@ class SileroVADConfig(BaseModel):
     #   - window_size_samples: int, 默认 512, 必须 > 0
     # 提示: 每行用 Field(default=..., ge=... 或 gt=...)
     prob_threshold: float = Field(default = 0.5,ge = 0.0,le = 1.0)
-    db_threshold: float = Field(default= -20.0,le = 0)
+    db_threshold: float = Field(default= -20.0)
     required_hits: int = Field(default=3, gt=0)
     required_misses: int = Field(default=24, gt=0)
     smoothing_window: int = Field(default=5, gt=0)
@@ -38,7 +38,7 @@ class VADConfig(BaseModel):
 
     def get_vad_params(self) -> dict:
         """根据 vad_type 取对应后端的参数字典"""
-        if self.vad_type == "silero":
+        if self.vad_type == "silero_vad":
             if self.silero is None:
                 return SileroVADConfig().model_dump()
             return self.silero.model_dump()

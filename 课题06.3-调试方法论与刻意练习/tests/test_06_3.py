@@ -12,54 +12,59 @@ import os
 import sys
 
 import numpy as np
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from echo.config import VADConfig, SileroVADConfig
+from pydantic import ValidationError
+
+from echo.config import SileroVADConfig
 from echo.vad.state_machine import StateMachine, State
 
 
 # ═══════════════════════════════════════════════════════════
-# 测试 1: Bug A 防回归 —— 分贝公式的系数
+# 测试 1: Bug A 防回归 —— RMS 必须是"均方根"（先平方、再平均、再开方）
 # ═══════════════════════════════════════════════════════════
-def test_calculate_db_uses_20_factor():
+def test_calculate_db_uses_rms_mean():
     """
-    幅度分贝公式是 20*log10(RMS)，不是 10*log10(RMS)。
+    幅度 0.5、长度 512 的音频，正确 RMS = sqrt(mean(x^2)) = 0.5，分贝 ≈ -6.02。
     提示:
-      - 用公式 20 * np.log10(0.5 + 1e-7) 算出期望值，不硬编码数字
+      - 期望值用公式 20 * np.log10(np.sqrt(np.mean(loud ** 2)) + 1e-7) 算出来，不硬编码
       - 用 pytest.approx(..., abs=0.01) 做浮点断言
     """
     sm = StateMachine()
     loud = np.ones(512, dtype=np.float32) * 0.5
     db = sm.calculate_db(loud)
-    expected = 20 * np.log10(0.5 + 1e-7)
+    expected = 20 * np.log10(np.sqrt(np.mean(loud ** 2)) + 1e-7)
     # TODO: 断言 db 接近 expected
     raise NotImplementedError("请填写断言")
 
 
 # ═══════════════════════════════════════════════════════════
-# 测试 2: Bug B 防回归 —— 配置参数必须原样透传
+# 测试 2: Bug B 防回归 —— ACTIVE 态必须按到达顺序追加字节
 # ═══════════════════════════════════════════════════════════
-def test_get_vad_params_passthrough():
+def test_active_appends_chunks_in_order():
     """
-    配置里写什么，工厂就该拿到什么，不能静默回落默认值。
+    语音块必须按到达顺序拼进 bytes_buffer，不能倒置。
     提示:
-      - 构造 VADConfig(vad_type="silero_vad", silero=SileroVADConfig(prob_threshold=0.9, required_hits=10))
-      - 调用 get_vad_params()，断言 prob_threshold == 0.9、required_hits == 10
+      - required_hits=2, required_misses=2, smoothing_window=1
+      - 2 帧 (b"P0", b"P1") → ACTIVE（预缓冲拼入）
+      - 2 帧 (b"v0", b"v1") 在 ACTIVE 态累积
+      - 4 帧静音 → 吐出完整段（ACTIVE 期间的前 2 帧静音也会进段）
+      - 期望输出 == b"P0P1v0v1ss"
     """
-    # TODO: 构造配置并断言参数透传
+    # TODO: 构造状态机序列，断言输出的完整段
     raise NotImplementedError("请填写断言")
 
 
 # ═══════════════════════════════════════════════════════════
-# 测试 3: Bug C 防回归 —— INACTIVE 恢复 ACTIVE 的帧数精确匹配
+# 测试 3: Bug C 防回归 —— 正分贝阈值必须被 Pydantic 拒绝
 # ═══════════════════════════════════════════════════════════
-def test_inactive_reacts_at_exact_required_hits():
+def test_db_threshold_rejects_positive():
     """
-    required_hits=2 时，INACTIVE 态命中第 2 帧必须立刻回 ACTIVE，不能多要 1 帧。
+    db_threshold 只允许负数（float32 音频的分贝不可能为正）。
     提示:
-      - required_hits=2, required_misses=2, smoothing_window=1
-      - 2 帧 loud → ACTIVE；2 帧 silent → INACTIVE；再 2 帧 loud → 断言状态 == State.ACTIVE
+      - with pytest.raises(ValidationError): SileroVADConfig(db_threshold=5)
     """
-    # TODO: 构造状态机序列并断言
+    # TODO: 断言正分贝配置会抛 ValidationError
     raise NotImplementedError("请填写断言")
