@@ -33,24 +33,18 @@ def create_vad(vad_type: str, **kwargs) -> VADInterface:
     返回:
         VADInterface 实例
     """
-    # ═══════════════════════════════════════════════════════════
-    # TODO 4: 实现工厂逻辑
-    # ═══════════════════════════════════════════════════════════
-    # 步骤:
-    #   1. 检查 vad_type 是否在 _VAD_REGISTRY 中
-    #   2. 不在 → raise ValueError(f"未知 VAD 类型: {vad_type}，可选: {list(_VAD_REGISTRY.keys())}")
-    #   3. 在 → 取出类，调用类(**kwargs) 创建实例并返回
-    # 提示: 4-5 行代码
-    pass
+    if vad_type not in _VAD_REGISTRY:
+        raise ValueError(f"未知 VAD 类型: {vad_type}，可选: {list(_VAD_REGISTRY.keys())}")
+    else:
+        return _VAD_REGISTRY[vad_type](**kwargs)
 
-
-# ═══════════════════════════════════════════════════════════
-# TODO 6: CUDA 降级包装
-# ═══════════════════════════════════════════════════════════
-# 写一个 create_vad_with_fallback(vad_type, **kwargs) 函数：
-#   1. 调用 create_vad(vad_type, **kwargs)
-#   2. 如果是 silero_vad 且抛 RuntimeError 且错误信息含 "cuda"/"device":
-#      - 打印降级警告（用 print 即可）
-#      - 重新调用 create_vad(vad_type, **kwargs)（Silero 默认 CPU）
-#   3. 其他错误不吞，直接 raise
-# 提示: 8-10 行代码
+    
+def create_vad_with_fallback(vad_type, **kwargs):
+    try:
+        return create_vad(vad_type, **kwargs)
+    except RuntimeError as e:
+        msg = str(e).lower()
+        if vad_type == "silero_vad" and ("cuda" in msg or "device" in msg):
+            print("CUDA/device 错误，自动回退到 CPU")
+            return create_vad(vad_type, **kwargs)
+        raise

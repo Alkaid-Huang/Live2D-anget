@@ -51,4 +51,4 @@ class EchoConfig(BaseModel):
     # 要求：
     #   - vad_config: VADConfig 类型，默认 VADConfig()
     # 提示: 一行代码
-    vad_config: VADConfig = Field(default=VADConfig)
+    vad_config: VADConfig = Field(default_factory=VADConfig)
