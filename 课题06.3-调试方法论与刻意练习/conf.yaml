@@ -1,0 +1,15 @@
+# Echo 配置文件
+# 修改 vad_type 即可切换 VAD 后端，无需改代码
+
+vad_config:
+  # 可选: "silero_vad"（真实现）, "mock_vad"（假实现）, "none"（禁用）
+  vad_type: "silero_vad"
+
+  silero:
+    prob_threshold: 0.5
+    db_threshold: -20.0       # float32 音频用负数（见课题06.1 坑7）
+    required_hits: 3           # 连续命中 3 次确认开口（3×32ms≈0.1s）
+    required_misses: 24        # 连续未命中 24 次确认说完（24×32ms≈0.77s）
+    smoothing_window: 5        # 滑动窗口平滑
+    pre_buffer_size: 20        # 预缓冲帧数（防切头）
+    window_size_samples: 512   # silero-vad 每帧 512 采样点
