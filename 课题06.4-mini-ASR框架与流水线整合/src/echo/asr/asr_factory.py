@@ -56,24 +56,20 @@ def create_asr(asr_type: str, **kwargs) -> ASRInterface:
     返回:
         ASRInterface 实例
     """
-    # ═══════════════════════════════════════════════════════════
-    # TODO 2: 实现工厂逻辑（对照 06.2 的 create_vad，多一步延迟导入）
-    # 步骤:
-    #   1. _ensure_backend_loaded(asr_type)   # 先确保后端已注册
-    #   2. 检查 asr_type 是否在 _ASR_REGISTRY 中
-    #   3. 不在 → raise ValueError(f"未知 ASR 类型: {asr_type}，可选: {list(_ASR_REGISTRY.keys())}")
-    #   4. 在 → 返回 _ASR_REGISTRY[asr_type](**kwargs)
-    # 提示: 5-7 行代码
-    pass
+    _ensure_backend_loaded(asr_type)
+    if asr_type not in _ASR_REGISTRY:
+        raise ValueError(f"未知 ASR 类型: {asr_type}，可选: {list(_ASR_REGISTRY.keys())}")
+    return _ASR_REGISTRY[asr_type](**kwargs)
 
 
-# ═══════════════════════════════════════════════════════════
-# TODO 4: CUDA/设备降级包装（对照 06.2 的 create_vad_with_fallback）
-# ═══════════════════════════════════════════════════════════
-# 写 create_asr_with_fallback(asr_type, **kwargs) 函数：
-#   1. 调用 create_asr(asr_type, **kwargs)
-#   2. 捕获 RuntimeError，若错误信息含 "cuda"/"device"/"gpu":
-#      - 打印降级警告（用 print 即可）
-#      - 用 device="cpu" 覆盖 kwargs 后重试（faster-whisper 支持）
-#   3. 其他错误不吞，直接 raise
-# 提示: 8-10 行代码
+def create_asr_with_fallback(asr_type: str, **kwargs) -> ASRInterface:
+    """创建 ASR；设备相关错误（cuda/device/gpu）时回退 CPU 重试"""
+    try:
+        return create_asr(asr_type, **kwargs)
+    except RuntimeError as e:
+        msg = str(e).lower()
+        if asr_type in ["faster_whisper", "sherpa_onnx"] and ("cuda" in msg or "device" in msg or "gpu" in msg):
+            print("CUDA/device 错误，自动回退到 CPU")
+            kwargs["device"] = "cpu"
+            return create_asr(asr_type, **kwargs)
+        raise

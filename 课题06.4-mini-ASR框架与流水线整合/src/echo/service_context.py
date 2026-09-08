@@ -30,10 +30,12 @@ class ServiceContext:
             return
         params = self.config.vad_config.get_vad_params()
         self.vad_engine = create_vad(vad_type,**params)
-    # TODO 8: 实现 init_asr（对照上面的 init_vad）
-    # 步骤:
-    #   1. 从 config.asr_config 取 asr_type
-    #   2. 若 asr_type == "none": self.asr_engine = None; return
-    #   3. 否则取参数: params = self.config.asr_config.get_asr_params()
-    #   4. 调用工厂: self.asr_engine = create_asr(asr_type, **params)
-    # 提示: 5-6 行代码
+
+    def init_asr(self) -> None:
+        """根据配置创建 ASR 引擎"""
+        asr_type = self.config.asr_config.asr_type
+        if asr_type == "none":
+            self.asr_engine = None
+            return
+        params = self.config.asr_config.get_asr_params()
+        self.asr_engine = create_asr(asr_type, **params)

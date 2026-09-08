@@ -73,25 +73,24 @@ class FasterWhisperASRConfig(BaseModel):
 
 class ASRConfig(BaseModel):
     """ASR 顶层配置：选择哪个后端 + 对应参数"""
-    # TODO 3: 定义 ASR 顶层配置（对照上面的 VADConfig）
-    # 要求：
-    #   - asr_type: str, 默认 "mock_asr"
-    #     （可选: "sherpa_onnx" | "faster_whisper" | "mock_asr" | "none"）
-    #   - sherpa_onnx: Optional[SherpaOnnxASRConfig] = Field(default=None)
-    #   - faster_whisper: Optional[FasterWhisperASRConfig] = Field(default=None)
-    #   - get_asr_params(self) 方法：
-    #     asr_type == "sherpa_onnx" 时返回 sherpa_onnx 的 model_dump()
-    #     asr_type == "faster_whisper" 时返回 faster_whisper 的 model_dump()
-    #     否则返回 {}（对照 VADConfig.get_vad_params 的写法）
-    pass
+    asr_type: str = Field(default = "mock_asr")  # "sherpa_onnx" | "faster_whisper" | "mock_asr" | "none"
+    sherpa_onnx: Optional[SherpaOnnxASRConfig] = Field(default=None)
+    faster_whisper: Optional[FasterWhisperASRConfig] = Field(default=None)
+
+    def get_asr_params(self) -> dict:
+        """根据 asr_type 取对应后端的参数字典"""
+        if self.asr_type == "sherpa_onnx":
+            if self.sherpa_onnx is None:
+                return SherpaOnnxASRConfig().model_dump()
+            return self.sherpa_onnx.model_dump()
+        elif self.asr_type == "faster_whisper":
+            if self.faster_whisper is None:
+                return FasterWhisperASRConfig().model_dump()
+            return self.faster_whisper.model_dump()
+        return {}
 
 
 class EchoConfig(BaseModel):
     """Echo 全局配置"""
-    # TODO 2: 定义顶层配置
-    # 要求：
-    #   - vad_config: VADConfig 类型，默认 VADConfig()
-    # 提示: 一行代码
     vad_config: VADConfig = Field(default_factory=VADConfig)
-    # TODO 5: 加 ASR 顶层配置字段（对照上一行）
-    # 要求: asr_config: ASRConfig = Field(default_factory=ASRConfig)
+    asr_config: ASRConfig = Field(default_factory = ASRConfig)

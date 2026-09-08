@@ -42,18 +42,13 @@ class FasterWhisperASR(ASRInterface):
         self.prompt = prompt
 
     def transcribe_np(self, audio_np: np.ndarray) -> str:
-        # ═══════════════════════════════════════════════════════════
-        # TODO 7: 调用 faster-whisper 转写 numpy 音频
-        # ═══════════════════════════════════════════════════════════
-        # ⚠️ 演化知识：参数名请以官方 README / 真实源码为准（检索后填写）。
-        # 对照真实源码 faster_whisper_asr.py（2026-08-13 检索）:
-        #   1. segments, info = self.model.transcribe(
-        #        audio_np,
-        #        beam_size=5,
-        #        language=self.language if self.language else None,
-        #        condition_on_previous_text=False,
-        #        initial_prompt=self.prompt,   # prompt 为 None 时就是不加提示
-        #      )
-        #   2. 拼接所有 segment.text（list comprehension + join），strip 后返回
-        # 提示: numpy 输入必须是 16k float32（接口契约），不需要传采样率
-        raise NotImplementedError("请检索官方文档后实现")
+        """同步转写：audio_np 必须是 float32 单声道 16kHz（接口契约）"""
+        segments, _ = self.model.transcribe(
+            audio_np,
+            beam_size=5,
+            language=self.language if self.language else None,
+            condition_on_previous_text=False,
+            initial_prompt=self.prompt,
+        )
+        return "".join(segment.text for segment in segments).strip()
+    
