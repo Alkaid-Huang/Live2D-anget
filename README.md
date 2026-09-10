@@ -54,7 +54,7 @@ python main.py --mode check                          # 检查四个组件是否�
 python main.py --mode text                           # 文本对话（不占麦克风，建议先跑这个）
 python main.py --mode console                        # 语音对话（建议戴耳机，避免回声误触发打断）
 python main.py --mode tts --text "你好，我是 Echo"    # 只测语音合成
-python main.py --mode asr --wav recording.wav        # 只测语音识别
+python main.py --mode asr --wav 你的录音.wav          # 只测语音识别（任意常见格式）
 ```
 
 ---
@@ -139,6 +139,6 @@ Live2D-anget/
 
 ## 开发说明
 
-本项目在架构设计、Bug 排查与文档上与 AI 助手协作完成，核心模块均保留
-`⚠️ AI 代写` 标记与对应的理解补课清单（`docs/理解补课清单.md`），
+本项目在架构设计、Bug 排查与文档上与 AI 助手协作完成；
+AI 参与的范围与对应的理解补课清单记录在 `docs/理解补课清单.md`，
 确保每一个"能跑"的模块都能被解释清楚。

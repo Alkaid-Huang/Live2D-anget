@@ -6,7 +6,7 @@ Echo 演示入口 —— 语音对话 / 文本对话 / 单点测试
     python main.py --mode text                      文本对话（不占麦克风，先跑通它）
     python main.py --mode console                   语音对话：mic → VAD → ASR → LLM → TTS
     python main.py --mode tts --text "你好，我是 Echo"
-    python main.py --mode asr --wav recording.wav
+    python main.py --mode asr --wav 你的录音.wav       # 16k 单声道 wav，其它格式会自动重采样
 """
 # ⚠️ AI 代写（2026-09-10）：尚未经学习者理解验收
 import argparse
@@ -114,7 +114,7 @@ def main() -> None:
     )
     parser.add_argument("--config", default="conf.yaml")
     parser.add_argument("--text", default="你好，我是 Echo，很高兴认识你。")
-    parser.add_argument("--wav", default="recording.wav")
+    parser.add_argument("--wav", default=None, help="--mode asr 时必填：音频文件路径")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -127,6 +127,8 @@ def main() -> None:
     elif args.mode == "tts":
         asyncio.run(mode_tts(config, args.text))
     elif args.mode == "asr":
+        if not args.wav:
+            parser.error("--mode asr 需要 --wav <音频文件路径>")
         asyncio.run(mode_asr(config, args.wav))
 
 
