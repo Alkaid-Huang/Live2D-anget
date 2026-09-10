@@ -21,7 +21,9 @@ if hasattr(sys.stdout, "reconfigure"):
 
 SRC = Path(__file__).resolve().parent.parent
 DEFAULT_DST = Path(r"D:\01_Work\00_Todo\echo-voice-assistant")
-DST = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_DST
+_FLAGS = {a for a in sys.argv[1:] if a.startswith("--")}
+_POSITIONAL = [a for a in sys.argv[1:] if not a.startswith("--")]
+DST = Path(_POSITIONAL[0]) if _POSITIONAL else DEFAULT_DST
 
 # ── 要复制的文件 ──────────────────────────────────────────
 FILES = ["main.py", "conf.yaml", "requirements.txt", "README.md", ".gitignore"]
@@ -72,17 +74,6 @@ REPLACEMENTS = [
     ),
     ("docs/理解补课清单.md", "# 理解补课清单（AI 代写模块）", "# 理解补课清单"),
     ("docs/真实Bug笔记.md", "**发现时间**：2026-09-10（冲刺第 4 天）", "**发现时间**：2026-09-10"),
-    ("README.md", "Live2D-anget/", "echo-voice-assistant/"),
-]
-
-# ── 要整行删除的内容（正则） ──────────────────────────────
-LINE_FILTERS = {
-    "README.md": [r"课题01 ~ 课题06\.4", r"仓库中的"],
-}
-
-# ── 复制后要再做一次的行内替换 ───────────────────────────
-POST_REPLACEMENTS = [
-    ("README.md", "├── docs/", "└── docs/"),
 ]
 
 MARKER = "AI 代写"
@@ -125,7 +116,23 @@ def copy_files() -> None:
         shutil.copytree(
             SRC / name,
             DST / name,
-            ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache"),
+            ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache", "test_06_*.py"),
+        )
+    (DST / "docs").mkdir(parents=True, exist_ok=True)
+    for name in DOCS:
+        shutil.copy2(SRC / "docs" / name, DST / "docs" / name)
+
+
+def copy_files_over() -> None:
+    """增量更新：覆盖目标仓库里的产品文件，保留 .git 与提交历史"""
+    for name in FILES:
+        shutil.copy2(SRC / name, DST / name)
+    for name in DIRS:
+        shutil.copytree(
+            SRC / name,
+            DST / name,
+            dirs_exist_ok=True,
+            ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache", "test_06_*.py"),
         )
     (DST / "docs").mkdir(parents=True, exist_ok=True)
     for name in DOCS:
@@ -152,26 +159,19 @@ def strip_markers(text: str) -> str:
 def rename_tests() -> None:
     """把带课号的测试文件名改成产品化命名"""
     for old, new in RENAMES.items():
-        (DST / old).rename(DST / new)
+        if (DST / old).exists():
+            (DST / old).rename(DST / new)
 
 
-def apply_text_cleanup() -> None:
+def apply_text_cleanup(strict: bool = True) -> None:
+    """strict=True 用于全新导出（漏了要报错）；False 用于增量更新（已清理过的就跳过）"""
     for rel, old, new in REPLACEMENTS:
         path = DST / rel
         text = path.read_text(encoding="utf-8")
         if old not in text:
-            raise SystemExit(f"替换未命中（请检查原文）：{rel} → {old[:40]}")
-        path.write_text(text.replace(old, new), encoding="utf-8")
-
-    for rel, patterns in LINE_FILTERS.items():
-        path = DST / rel
-        lines = path.read_text(encoding="utf-8").splitlines()
-        kept = [ln for ln in lines if not any(re.search(p, ln) for p in patterns)]
-        path.write_text("\n".join(kept) + "\n", encoding="utf-8")
-
-    for rel, old, new in POST_REPLACEMENTS:
-        path = DST / rel
-        text = path.read_text(encoding="utf-8")
+            if strict:
+                raise SystemExit(f"替换未命中（请检查原文）：{rel} → {old[:40]}")
+            continue
         path.write_text(text.replace(old, new), encoding="utf-8")
 
     # 清理 Python 文件里的过程标记
@@ -201,14 +201,29 @@ def check_leftovers() -> None:
 
 def main() -> None:
     guard_destination()
-    if DST.exists():
-        shutil.rmtree(DST)
-    DST.mkdir(parents=True)
-    copy_files()
-    rename_tests()
-    apply_text_cleanup()
+    args = _FLAGS
+    update_mode = "--update" in args
+
+    if update_mode:
+        if not (DST / ".git").exists():
+            raise SystemExit(f"更新模式要求目标已是 git 仓库：{DST}")
+        copy_files_over()
+        rename_tests()
+        apply_text_cleanup(strict=False)
+    else:
+        if (DST / ".git").exists() and "--force" not in args:
+            raise SystemExit(
+                f"目标已是 git 仓库，为避免删掉历史，拒绝全新导出：{DST}\n"
+                f"如确认要重建，请加 --force；只想同步内容，请用 --update"
+            )
+        if DST.exists():
+            shutil.rmtree(DST)
+        DST.mkdir(parents=True)
+        copy_files()
+        rename_tests()
+        apply_text_cleanup(strict=True)
     check_leftovers()
-    print(f"[OK] 已导出到 {DST}")
+    print(f"[OK] 已{'更新' if update_mode else '导出'}到 {DST}")
 
 
 if __name__ == "__main__":
