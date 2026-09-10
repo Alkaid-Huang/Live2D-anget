@@ -174,6 +174,15 @@ def rename_tests() -> None:
             (DST / old).rename(DST / new)
 
 
+def copy_renamed_tests() -> None:
+    """把课号命名的测试按映射复制成产品化命名（内容同步，文件名不带课号）"""
+    for old, new in RENAMES.items():
+        source = SRC / old
+        if source.exists():
+            (DST / new).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, DST / new)
+
+
 def apply_text_cleanup(strict: bool = True) -> None:
     """strict=True 用于全新导出（漏了要报错）；False 用于增量更新（已清理过的就跳过）"""
     for rel, old, new in REPLACEMENTS:
@@ -250,6 +259,7 @@ def main() -> None:
         if not (DST / ".git").exists():
             raise SystemExit(f"更新模式要求目标已是 git 仓库：{DST}")
         copy_files_over()
+        copy_renamed_tests()
         rename_tests()
         apply_text_cleanup(strict=False)
     else:
@@ -262,6 +272,7 @@ def main() -> None:
             shutil.rmtree(DST)
         DST.mkdir(parents=True)
         copy_files()
+        copy_renamed_tests()
         rename_tests()
         apply_text_cleanup(strict=True)
     check_leftovers()
