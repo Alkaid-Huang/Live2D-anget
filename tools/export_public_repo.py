@@ -87,6 +87,8 @@ REPLACEMENTS = [
 
 MARKER = "AI 代写"
 LEFTOVER_PATTERN = re.compile(r"课题|冲刺|06\.4|06\.2|06\.1")
+# 常见 API Key 形态：sk- 开头 + 20 位以上字母数字（DeepSeek/OpenAI 等）
+SECRET_PATTERN = re.compile(r"sk-[A-Za-z0-9]{20,}")
 
 LICENSE_TEXT = """MIT License
 
@@ -211,6 +213,34 @@ def check_leftovers() -> None:
         print("[OK] 无课号/过程标记残留")
 
 
+def check_secrets() -> None:
+    """扫描导出目录，发现疑似真实密钥立即中止（防止把 Key 提交到公开仓库）"""
+    skip_dirs = {".venv", "models", "outputs", ".git", "__pycache__", ".pytest_cache"}
+    hits = []
+    for path in DST.rglob("*"):
+        if any(part in skip_dirs for part in path.parts):
+            continue
+        if path.is_dir():
+            continue
+        if path.name == ".env":
+            continue  # 本地密钥文件（已被 .gitignore 忽略），不属于待扫描的仓库内容
+        if path.suffix not in {".py", ".md", ".yaml", ".yml", ".txt", ".bat", ".ps1"} and not path.name.startswith(
+            ".env"
+        ):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        if SECRET_PATTERN.search(text):
+            hits.append(str(path.relative_to(DST)))
+    if hits:
+        raise SystemExit(
+            "[!] 检测到疑似真实 API Key，已中止导出/更新，请立即移除：\n   " + "\n   ".join(hits)
+        )
+    print("[OK] 未检测到明文密钥")
+
+
 def main() -> None:
     guard_destination()
     args = _FLAGS
@@ -235,6 +265,7 @@ def main() -> None:
         rename_tests()
         apply_text_cleanup(strict=True)
     check_leftovers()
+    check_secrets()
     print(f"[OK] 已{'更新' if update_mode else '导出'}到 {DST}")
 
 
