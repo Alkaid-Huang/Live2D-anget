@@ -28,7 +28,7 @@ DST = Path(_POSITIONAL[0]) if _POSITIONAL else DEFAULT_DST
 # ── 要复制的文件 ──────────────────────────────────────────
 FILES = ["main.py", "conf.yaml", "requirements.txt", "README.md", ".gitignore"]
 DIRS = ["src", "tests", "benchmarks"]
-DOCS = ["真实Bug笔记.md", "理解补课清单.md"]
+DOCS = ["需求文档.md", "架构设计.md", "接口文档.md", "真实Bug笔记.md", "理解补课清单.md"]
 
 # ── 重命名（产品仓库里不出现课号） ─────────────────────────
 RENAMES = {
