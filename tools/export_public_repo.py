@@ -33,6 +33,8 @@ FILES = [
     "README.md",
     ".gitignore",
     ".env.example",
+    "run.bat",
+    "run.ps1",
 ]
 DIRS = ["src", "tests", "benchmarks"]
 DOCS = ["需求文档.md", "架构设计.md", "接口文档.md", "真实Bug笔记.md", "理解补课清单.md"]
@@ -192,7 +194,10 @@ def apply_text_cleanup(strict: bool = True) -> None:
 
 def check_leftovers() -> None:
     leftovers = []
+    skip_dirs = {".venv", "models", "outputs", ".git", "__pycache__", ".pytest_cache"}
     for path in DST.rglob("*"):
+        if any(part in skip_dirs for part in path.parts):
+            continue
         if path.suffix not in {".py", ".md", ".yaml", ".txt"}:
             continue
         for no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
