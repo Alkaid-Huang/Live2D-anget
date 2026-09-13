@@ -37,7 +37,19 @@ FILES = [
     "run.ps1",
 ]
 DIRS = ["src", "tests", "benchmarks"]
-DOCS = ["需求文档.md", "架构设计.md", "接口文档.md", "真实Bug笔记.md", "理解补课清单.md"]
+DOCS = [
+    "需求文档.md",
+    "架构设计.md",
+    "接口文档.md",
+    "调用链.md",
+    "真实Bug笔记.md",
+    "理解补课清单.md",
+]
+
+# 源文件 → 公开仓库中的文件名（改名导出）
+EXTRA_FILES = {
+    "docs/项目规范-AGENTS.md": "AGENTS.md",
+}
 
 # ── 重命名（产品仓库里不出现课号） ─────────────────────────
 RENAMES = {
@@ -82,6 +94,8 @@ REPLACEMENTS = [
         "本项目部分代码由 AI 助手生成，清单如下。",
     ),
     ("docs/理解补课清单.md", "# 理解补课清单（AI 代写模块）", "# 理解补课清单"),
+    # 源仓库的项目规范放在 docs/ 下（根目录 AGENTS.md 是学习协议），公开仓库里改名为 AGENTS.md
+    ("README.md", "docs/项目规范-AGENTS.md", "AGENTS.md"),
     ("docs/真实Bug笔记.md", "**发现时间**：2026-09-10（冲刺第 4 天）", "**发现时间**：2026-09-10"),
 ]
 
@@ -132,6 +146,8 @@ def copy_files() -> None:
     (DST / "docs").mkdir(parents=True, exist_ok=True)
     for name in DOCS:
         shutil.copy2(SRC / "docs" / name, DST / "docs" / name)
+    for src_rel, dst_rel in EXTRA_FILES.items():
+        shutil.copy2(SRC / src_rel, DST / dst_rel)
 
 
 def copy_files_over() -> None:
@@ -148,6 +164,8 @@ def copy_files_over() -> None:
     (DST / "docs").mkdir(parents=True, exist_ok=True)
     for name in DOCS:
         shutil.copy2(SRC / "docs" / name, DST / "docs" / name)
+    for src_rel, dst_rel in EXTRA_FILES.items():
+        shutil.copy2(SRC / src_rel, DST / dst_rel)
 
 
 def strip_markers(text: str) -> str:

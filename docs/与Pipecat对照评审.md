@@ -41,9 +41,12 @@
 
 ### P0-2 没有回声/降噪环节，也没有双工模式（对应"被自己说的话打断"）
 
-**现状**：麦克风数据直连 VAD；播放期间照常监听。`barge_in: false` 只关闭了"打断动作"，
-但回声仍会走完 VAD → ASR → LLM 全链路，形成自我对话。同时输入/输出流长期同时占用同一块声卡，
+**现状（评审时的状态）**：麦克风数据直连 VAD；播放期间照常监听，仅有一个 `barge_in` 开关控制是否打断，
+回声仍会走完 VAD → ASR → LLM 全链路，形成自我对话。同时输入/输出流长期同时占用同一块声卡，
 在部分 Windows 驱动上会导致输入流中断。
+
+**已改（2026-09-11）**：用 `duplex_mode` 显式表达三种策略——`half`（默认，播放时暂停采集，
+顺带避开声卡双流争用）、`barge_in`（戴耳机插话）、`full`（预留 AEC）。
 
 **Pipecat 做法**：输入音频先经过滤波器（可插拔降噪/AEC），再进 VAD；
 打断由 `StartInterruptionFrame` 表达，且 `BotStartedSpeakingFrame` / `UserStartedSpeakingFrame` 明确区分双方说话状态。
@@ -233,9 +236,18 @@ Pipecat 有完整测试 + CI + 覆盖率；Echo 有 42 个测试但没有 CI，�
 | P0-3 判停只有静音计数 | 未开始 | 计划把判停抽象为策略（第二批） |
 | P0-4 最大时长/空闲超时缺失 | 已修复 | `max_utterance_seconds` 与 `audio_idle_timeout` 生效；断流先抢救当前语音段再重启采集 |
 | 丢块不可见 | 已修复 | `MicStream` 改"丢最旧保最新"并计数；管线每 30 秒与退出时打印统计 |
+| P1-1 无流式链路 | 未开始 | M4：分句流式 TTS → LLM 流式；已量化瓶颈（TTS 2.7s、工具调用 3 次往返 6.9s） |
+| P1-2 无统一指标 | 部分 | 已有分阶段耗时事件与 `benchmarks/`，缺 TTFB/TTFA 式标准指标 |
+| P1-3 重采样质量 | 未开始 | M4：接 soxr 流式重采样 |
+| P1-5 无传输抽象 | 未开始 | M3：为 Live2D 前端引入 WebSocket 事件总线 |
 | P2-1 死代码 | 未处理 | `create_asr_with_fallback` 仍无调用点，待决策（接入或删除） |
+| P2-3 无 CI | 未开始 | 计划加最小 CI（pytest + ruff） |
 
-**新增测试**：`force_flush`、丢块计数与丢旧保新、half 模式播放期暂停采集、超长强制切分（46 个用例全绿）。
+**新增测试**：`force_flush`、丢块计数与丢旧保新、half 模式播放期暂停采集、超长强制切分（当时 46 个用例如今为 52）。
+
+**额外进展**：按"Agent 驱动 Live2D"的定位补齐了 M2 —— function calling 工具调用（时间/天气/记忆）、
+长期记忆、结构化情绪输出与事件流（`thinking / tool_call / tool_result / speech / emotion`），
+对应 Pipecat 的 `processors/frameworks` 与 `services` 能力域。
 
 > 备注：单测还抓出一个真实 bug——"超长强制切分"最初只在收到音频块时检查，
 > 音频断流期间永远不触发。修复方式是每轮循环都检查（`_enforce_max_utterance`）。
