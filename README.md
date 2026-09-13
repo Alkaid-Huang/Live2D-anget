@@ -28,6 +28,7 @@ docs/
   ├── 与Pipecat对照评审.md  与工业级框架的差距分析、改造进度与三批路线
   ├── 与D_sakiko对照.md     同类开源项目的完成度对照、可借鉴点与许可风险
   ├── 三项目横向对比.md     Open-LLM-VTuber / Prometheus / D_sakiko 的定位、强弱项与启示
+  ├── 编码Agent能力地图.md  编码 Agent 的六项能力、度量方式与 Mini CodeAgent 落地方案
   ├── 面试拷打手册.md       高频追问与答题骨架（含 Agent 大脑专章）
   └── 学习仓库说明.md       学习流程说明（原 README）
 recording.wav             个人录音样本（ASR 演示用；因隐私原因未放进产品仓库）
