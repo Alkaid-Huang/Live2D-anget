@@ -27,6 +27,7 @@ AGENTS.md                 教学协议（本仓库专用，产品仓库里另有
 docs/
   ├── 与Pipecat对照评审.md  与工业级框架的差距分析、改造进度与三批路线
   ├── 与D_sakiko对照.md     同类开源项目的完成度对照、可借鉴点与许可风险
+  ├── D_sakiko架构研究.md   模块地图、十个可借鉴的分层设计、ADR 与术语表实践
   ├── 三项目横向对比.md     Open-LLM-VTuber / Prometheus / D_sakiko 的定位、强弱项与启示
   ├── 编码Agent能力地图.md  编码 Agent 的六项能力、度量方式与 Mini CodeAgent 落地方案
   ├── 面试拷打手册.md       高频追问与答题骨架（含 Agent 大脑专章）
